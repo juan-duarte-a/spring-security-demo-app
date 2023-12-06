@@ -9,7 +9,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,13 +30,17 @@ public class WebConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorize -> authorize
+        http
+                .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/css/**", "/js/**", "/login").permitAll()
                         .requestMatchers("/admin").hasRole(AppUser.Role.ADMIN.toString())
-                        .requestMatchers("/").hasAnyRole(AppUser.Role.ADMIN.toString(), AppUser.Role.USER.toString())
+                        .requestMatchers("/").hasAnyRole(
+                                AppUser.Role.ADMIN.toString(), AppUser.Role.USER.toString())
                         .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())
-                .logout(LogoutConfigurer::permitAll);
+                .logout(logout -> logout
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true));
 
         return http.build();
     }
